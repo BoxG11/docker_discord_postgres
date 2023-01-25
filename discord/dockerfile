@@ -1,0 +1,13 @@
+FROM python:bullseye
+
+# copy requirements file from host to container
+COPY requirements.txt .
+
+# install requirements
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && pip install -U pip \
+    && pip install -r requirements.txt
+
+# run script
+#CMD ["python", "/usr/src/app/bot.py"]
