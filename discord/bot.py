@@ -18,6 +18,7 @@ intents=discord.Intents.all()
 
 client = commands.Bot(command_prefix='!', intents=intents)
 
+db.db_action("CREATE TABLE IF NOT EXISTS users(username text, email text)")
 print(db.db_action("SELECT count(*) FROM users"))
 
 @client.event
