@@ -7,6 +7,9 @@ from discord.ext import commands
 from discord.utils import get
 from discord.ext.commands import Bot
 
+import logging
+
+
 import datetime
 
 import db
@@ -36,6 +39,9 @@ async def on_message(message):
     sql = f"INSERT INTO users (username, email) VALUES ('{memberid}', '{message.content}');"
     #await message.channel.send(sql)
     db.db_action(str(sql))
+
+    logging.basicConfig(filename='discord.log', encoding='utf-8', level=logging.DEBUG)
+    logging.debug("Message: " + message.content + " | Author: " + str(message.author) + " | Time: " + str(datetime.datetime.now()))
 
     sql = f"SELECT count(*) FROM users;"
     nr = db.db_action(str(sql))
