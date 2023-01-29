@@ -1,53 +1,47 @@
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    tokens INT DEFAULT NULL,
-    last_played TIMESTAMP DEFAULT NOW()
+    id VARCHAR(25) PRIMARY KEY,
+    tokens INTEGER NOT NULL DEFAULT 0,
+    last_played TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS commands (
     id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    text TEXT DEFAULT NULL,
-    time TIMESTAMP NOT NULL,
+    user_id VARCHAR(25) NOT NULL,
+    command TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
     id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    text TEXT DEFAULT NULL,
-    time TIMESTAMP DEFAULT NOW(),
+    user_id VARCHAR(25) NOT NULL,
+    message TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS session (
-    user_id INT NOT NULL UNIQUE,
-    start TIMESTAMP DEFAULT NOW(),
-    stop TIMESTAMP DEFAULT NULL,
-    session_id SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS responses (
+    message_id INTEGER NOT NULL,
+    response TEXT NOT NULL,
+    FOREIGN KEY (message_id) REFERENCES messages(id)
+);
+
+CREATE TABLE IF NOT EXISTS pickers (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(25) NOT NULL,
+    picker TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS queue (
     queue_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    task TEXT NOT NULL DEFAULT NULL,
-    taken_by TEXT NULL,
-    done BOOLEAN NOT NULL DEFAULT false,
+    user_id VARCHAR(25) NOT NULL,
+    song_name TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS pickers (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT NULL,
-    working BOOLEAN,
-    time_started TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS responses (
-    user_id INT NOT NULL,
-    message_id SERIAL PRIMARY KEY,
-    answer TEXT,
-    sent BOOLEAN NOT NULL DEFAULT false,
+CREATE TABLE IF NOT EXISTS session (
+    session_id SERIAL PRIMARY KEY,
+    user_id VARCHAR(25) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );

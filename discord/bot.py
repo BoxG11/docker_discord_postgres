@@ -45,11 +45,17 @@ async def on_message(message):
 
     tokens = db.get_tokens(member_id)
 
-    DM(member_id, f"Thank you for signing up! You have {tokens} tokens")
-
     if message.content.startswith('!start'):
-        await message.channel.send(f'Started for {member}')
-        print(f'Started for {member}')
+        tokens = db.get_tokens(member_id)
+        if tokens:
+            await DM(member, f'Started a session for you. You have {tokens[0][0]} tokens left.')
+        #print(f'Started for {member}')
+        else:
+            await DM(member, f'Not enough tokens to start. Charge up again with !charge')
+            #print(f'Not enough tokens for {member}')
+
+    if message.content.startswith('!tokens'):
+        await DM(member, f"Thank you for signing up! You have {tokens} tokens")
 
 
 async def DM(ctx, user: discord.User, *, message=None):

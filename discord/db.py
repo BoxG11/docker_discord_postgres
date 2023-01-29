@@ -57,35 +57,44 @@ CREATE TABLE IF NOT EXISTS responses (
 
 
 def insert_user(user_id):
-    sql_command = f"INSERT INTO users (id) VALUES ({user_id};)"
-    db_action(sql_command)
+    if not check_user(user_id):
+        sql_command = f"INSERT INTO users (id) VALUES ('{user_id}');"
+        db_action(sql_command)
+
+def check_user(user_id):
+    sql_command = f"SELECT id FROM users WHERE id = '{user_id}';"
+    result = db_action(sql_command)
+    if result:
+        return True
+    else:
+        return False
 
 def insert_message(user_id, message):
-    sql_command = f"INSERT INTO messages (user_id, text) VALUES ({user_id}, '{message}');"
+    sql_command = f"INSERT INTO messages (user_id, text) VALUES ('{user_id}', '{message}');"
     db_action(sql_command)
 
 def insert_command(user_id, command):
-    sql_command = f"INSERT INTO commands (user_id, text) VALUES ({user_id}, '{command}');"
+    sql_command = f"INSERT INTO commands (user_id, text) VALUES ('{user_id}', '{command}');"
     db_action(sql_command)
 
 def insert_session(user_id):
-    sql_command = f"INSERT INTO session (user_id) VALUES ({user_id});"
+    sql_command = f"INSERT INTO session (user_id) VALUES ('{user_id}');"
     db_action(sql_command)
 
 def update_session(user_id):
-    sql_command = f"UPDATE session SET stop = NOW() WHERE user_id = {user_id} AND stop IS NULL;"
+    sql_command = f"UPDATE session SET stop = NOW() WHERE user_id = '{user_id}' AND stop IS NULL;"
     db_action(sql_command)
 
 def increase_tokens(user_id, tokens):
-    sql_command = f"UPDATE users SET tokens = tokens + {tokens} WHERE id = {user_id};"
+    sql_command = f"UPDATE users SET tokens = tokens + {tokens} WHERE id = '{user_id}';"
     db_action(sql_command)
 
 def decrease_tokens(user_id, tokens):
-    sql_command = f"UPDATE users SET tokens = tokens - {tokens} WHERE id = {user_id};"
+    sql_command = f"UPDATE users SET tokens = tokens - {tokens} WHERE id = '{user_id}';"
     db_action(sql_command)
 
 def get_tokens(user_id):
-    sql_command = f"SELECT tokens FROM users WHERE id = {user_id};"
+    sql_command = f"SELECT tokens FROM users WHERE id = '{user_id}';"
     result = db_action(sql_command)
     return result
 
