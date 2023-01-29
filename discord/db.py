@@ -1,20 +1,113 @@
 import psycopg2
 
-def db_write(table, action, sql_command):
-    
-    if action == "insert":
-        #sql builder for insert
-        db_action(f"INSERT INTO public.{table} (username, email) VALUES ({sql_command})")
-        return
-    
-    elif action == "select":
-        #sql builder for select
-        
-        return db_action(f"SELECT count(*) FROM {table}")
-    
-    elif action == "create":
-        #sql builder for create
-        return
+"""CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    tokens INT DEFAULT NULL,
+    last_played TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS commands (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    text TEXT DEFAULT NULL,
+    time TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    text TEXT DEFAULT NULL,
+    time TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS session (
+    user_id INT NOT NULL,
+    start TIMESTAMP NOT NULL DEFAULT NOW(),
+    stop TIMESTAMP,
+    session_id SERIAL PRIMARY KEY,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS queue (
+    queue_id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,
+    task TEXT NOT NULL DEFAULT NULL,
+    taken_by TEXT NULL,
+    done BOOLEAN NOT NULL DEFAULT false,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS pickers (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL DEFAULT NULL,
+    working BOOLEAN,
+    time_started TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS responses (
+    user_id INT NOT NULL,
+    message_id SERIAL PRIMARY KEY,
+    answer TEXT,
+    sent BOOLEAN NOT NULL DEFAULT false,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+"""
+
+
+def insert_user(user_id):
+    sql_command = f"INSERT INTO users (id) VALUES ({user_id};)"
+    db_action(sql_command)
+
+def insert_message(user_id, message):
+    sql_command = f"INSERT INTO messages (user_id, text) VALUES ({user_id}, '{message}');"
+    db_action(sql_command)
+
+def insert_command(user_id, command):
+    sql_command = f"INSERT INTO commands (user_id, text) VALUES ({user_id}, '{command}');"
+    db_action(sql_command)
+
+def insert_session(user_id):
+    sql_command = f"INSERT INTO session (user_id) VALUES ({user_id});"
+    db_action(sql_command)
+
+def update_session(user_id):
+    sql_command = f"UPDATE session SET stop = NOW() WHERE user_id = {user_id} AND stop IS NULL;"
+    db_action(sql_command)
+
+def increase_tokens(user_id, tokens):
+    sql_command = f"UPDATE users SET tokens = tokens + {tokens} WHERE id = {user_id};"
+    db_action(sql_command)
+
+def decrease_tokens(user_id, tokens):
+    sql_command = f"UPDATE users SET tokens = tokens - {tokens} WHERE id = {user_id};"
+    db_action(sql_command)
+
+def get_tokens(user_id):
+    sql_command = f"SELECT tokens FROM users WHERE id = {user_id};"
+    result = db_action(sql_command)
+    return result
+
+def claim_task(picker_id, task):
+    sql_command = f"UPDATE queue SET taken_by = {picker_id} WHERE task = '{task}';"
+    db_action(sql_command)
+
+def check_task(picker_id):
+    sql_command = f"SELECT task FROM queue WHERE taken_by = {picker_id} AND done = 0;"
+    result = db_action(sql_command)
+    return result
+
+def finish_task(picker_id):
+    sql_command = f"UPDATE queue SET done = 1 WHERE taken_by = {picker_id} AND done = 0;"
+    db_action(sql_command)
+
+def get_message():
+    sql_command = "SELECT text, user_id FROM messages WHERE sent = 0;"
+    result = db_action(sql_command)
+    if result:
+        return result[0]
+
 
 # Connect to the database
 def db_action(sql_command):
@@ -29,13 +122,8 @@ def db_action(sql_command):
     cur.execute(sql_command)
     try:
         result = cur.fetchall()
-        if result != []:
-            for res in result:
-                print(res)
-        else:
-            result = "No results"
     except:
-        result = "No results"
+        result = False
     
     # Commit the changes to the database
     conn.commit()

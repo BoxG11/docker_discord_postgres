@@ -8,3 +8,6 @@ api_user_gridscale = ""
 api_key_gridscale = ""
 
 discord_token = ""
+
+prom_user = ""
+prom_pass = ""

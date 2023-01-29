@@ -10,24 +10,9 @@ services:
       PGDATA: /data/postgres
     volumes:
        - postgres:/data/postgres
+       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
-    networks:
-      - postgres
-    restart: unless-stopped
-  
-  pgadmin:
-    container_name: pgadmin_container
-    image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin4@pgadmin.org}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
-    volumes:
-       - pgadmin:/var/lib/pgadmin
-
-    ports:
-      - "${PGADMIN_PORT:-5050}:80"
     networks:
       - postgres
     restart: unless-stopped
@@ -47,11 +32,28 @@ services:
     container_name: prometheus_container
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./secrets.py:/etc/prometheus/secrets.py
+
+    #command: [ "sed", "-i", "'s/$/replace_string/'", "filename" ]
+
     ports:
       - "9090:9090"
-    networks:
-      - postgres
+
+    network_mode: host
+
     restart: unless-stopped
+
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    network_mode: host
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
 
 
 
@@ -61,4 +63,3 @@ networks:
 
 volumes:
     postgres:
-    pgadmin:
