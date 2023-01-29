@@ -44,7 +44,7 @@ async def on_message(message):
     db.insert_user(member_id)
 
     if message.content.startswith('!start'):
-        start_session(member_id)
+        await start_session(member_id)
 
     if message.content.startswith('!tokens'):
         tokens = db.get_tokens(member_id)
