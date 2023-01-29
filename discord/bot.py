@@ -16,13 +16,13 @@ import db
 
 import secrets
 
-intents=discord.Intents.all()
+intents = discord.Intents.all()
 
 
 client = commands.Bot(command_prefix='!', intents=intents)
 
 db.db_action("CREATE TABLE IF NOT EXISTS users(username text, email text)")
-print(db.db_action("SELECT count(*) FROM users"))
+print(db.db_action("SELECT count(*) FROM users")[0][0])
 
 @client.event
 async def on_ready():
@@ -43,24 +43,39 @@ async def on_message(message):
 
     db.insert_user(member_id)
 
-    tokens = db.get_tokens(member_id)
-
     if message.content.startswith('!start'):
-        tokens = db.get_tokens(member_id)
-        if tokens:
-            await DM(member, f'Started a session for you. You have {tokens[0][0]} tokens left.')
-        #print(f'Started for {member}')
-        else:
-            await DM(member, f'Not enough tokens to start. Charge up again with !charge')
-            #print(f'Not enough tokens for {member}')
+        start_session(member_id)
 
     if message.content.startswith('!tokens'):
-        await DM(member, f"Thank you for signing up! You have {tokens} tokens")
+        tokens = db.get_tokens(member_id)
+        await DM(member, f"You have {tokens} tokens")
+
+    #TODO include payment
+    if message.content.startswith('!charge'):
+        db.increase_tokens(member_id, 1)
+        tokens = db.get_tokens(member_id)
+        await DM(member, f"You have {tokens} tokens")
+
+    if message.content.startswith('!stop'):
+        db.add_task(member_id, "stop")
+        await DM(member, f"Stopped your session")
 
 
-async def DM(ctx, user: discord.User, *, message=None):
-    message = message or "This Message is sent via DM"
-    await client.send_message(user, message)
+async def DM(member: discord.Member, message):
+    channel = await member.create_dm()
+    await channel.send(message)
+
+async def start_session(member_id):
+    db.add_task(member_id, "start")
+    tokens = db.get_tokens(member_id)
+    if tokens:
+        db.decrease_tokens(member_id, 1)
+        await DM(member_id, f'Started a session for you. You have {tokens[0][0]} tokens left.')
+    # print(f'Started for {member}')
+    else:
+        await DM(member_id, f'Not enough tokens to start. Charge up again with !charge')
+        # print(f'Not enough tokens for {member}')
+    #TODO add to database
 
 
 if __name__ == '__main__':

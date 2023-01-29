@@ -17,7 +17,7 @@ services:
       - postgres
     restart: unless-stopped
 
-  app:
+  discord:
     build: ./discord
     volumes:
       - "./discord/:/usr/src/app"
@@ -31,8 +31,9 @@ services:
     image: prom/prometheus
     container_name: prometheus_container
     volumes:
-      - prometheus.yml:/etc/prometheus/prometheus.yml
-      - secrets.py:/etc/prometheus/secrets.py
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./secrets.py:/etc/prometheus/secrets.py
+      - ./secrets.py:/usr/src/app/secrets.py
 
     #command: [ "sed", "-i", "'s/$/replace_string/'", "filename" ]
 
