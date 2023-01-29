@@ -25,7 +25,8 @@ services:
     networks:
       - postgres
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   prometheus:
     image: prom/prometheus

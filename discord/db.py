@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS responses (
 """
 
 
+
 def insert_user(user_id):
     if not check_user(user_id):
         sql_command = f"INSERT INTO users (id) VALUES ('{user_id}');"
@@ -98,12 +99,21 @@ def get_tokens(user_id):
     result = db_action(sql_command)
     return result
 
+def add_task(user_id, task):
+    sql_command = f"INSERT INTO queue (user_id, task) VALUES ('{user_id}', '{task}');"
+    db_action(sql_command)
+
 def claim_task(picker_id, task):
     sql_command = f"UPDATE queue SET taken_by = {picker_id} WHERE task = '{task}';"
     db_action(sql_command)
 
 def check_task(picker_id):
     sql_command = f"SELECT task FROM queue WHERE taken_by = {picker_id} AND done = 0;"
+    result = db_action(sql_command)
+    return result
+
+def get_tasks():
+    sql_command = "SELECT * FROM queue WHERE done = 0;"
     result = db_action(sql_command)
     return result
 
