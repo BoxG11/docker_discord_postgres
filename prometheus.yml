@@ -14,8 +14,8 @@ remote_write:
 - url: https://prometheus-prod-22-prod-eu-west-3.grafana.net/api/prom/push
   name: "docker_discord"
   basic_auth:
-    username: "${PROM_USER}"
-    password: "${PROM_PASS}"
+    username: ""
+    password: ""
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
