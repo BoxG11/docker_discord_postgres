@@ -31,8 +31,8 @@ services:
     image: prom/prometheus
     container_name: prometheus_container
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./secrets.py:/etc/prometheus/secrets.py
+      - prometheus.yml:/etc/prometheus/prometheus.yml
+      - secrets.py:/etc/prometheus/secrets.py
 
     #command: [ "sed", "-i", "'s/$/replace_string/'", "filename" ]
 
