@@ -7,7 +7,4 @@ postgres = ""
 api_user_gridscale = ""
 api_key_gridscale = ""
 
-discord_token = ""
-
-prom_user = ""
-prom_pass = ""
+discord_token = "ODE1Mjg5OTE0Njg5NzE2MjY0.YDqP5w.2YDkULicGdW0nLOLBXG5WeGOoLE"

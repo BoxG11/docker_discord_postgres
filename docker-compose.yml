@@ -5,6 +5,7 @@ services:
     container_name: postgres_container
     image: postgres
     environment:
+    #TODO: change passwords
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       PGDATA: /data/postgres
@@ -16,12 +17,32 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  
+  picker:
+    build: ./picker
+    volumes:
+      - "./picker/:/usr/src/app/"
+      - "./db.py:/usr/src/app/db.py"
+    command: ["python", "/usr/src/app/picker.py"]
+    networks:
+      - postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   discord:
     build: ./discord
     volumes:
-      - ./discord/:/usr/src/app/
-    command: ["python", "/usr/src/app/bot.py"]
+      - "./discord/:/usr/src/app/"
+      - "./db.py:/usr/src/app/db.py"
+    command: ["python", "/usr/src/app/listener.py"]
     networks:
       - postgres
     depends_on:
@@ -42,19 +63,6 @@ services:
     network_mode: host
 
     restart: unless-stopped
-
-
-  node_exporter:
-    image: quay.io/prometheus/node-exporter:latest
-    container_name: node_exporter
-    command:
-      - '--path.rootfs=/host'
-    network_mode: host
-    pid: host
-    restart: unless-stopped
-    volumes:
-      - '/:/host:ro,rslave'
-
 
 
 networks:

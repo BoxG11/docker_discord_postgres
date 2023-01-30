@@ -36,7 +36,7 @@ async def on_message(message):
         await DM(member, "Started session")
 
     if message.content.startswith('!tokens'):
-        tokens = db.get_tokens(member_id)
+        tokens = db.get_tokens(member_id)[0]
         await DM(member, f"You have {tokens} tokens")
 
     #TODO include payment

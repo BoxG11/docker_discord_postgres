@@ -14,8 +14,8 @@ remote_write:
 - url: https://prometheus-prod-22-prod-eu-west-3.grafana.net/api/prom/push
   name: "docker_discord"
   basic_auth:
-    username: ""
-    password: ""
+    username: "748373"
+    password: "eyJrIjoiNDdkMzY1ZmNmMjZkMmQ1YjlmY2UwZTA4ZGEwNjc1MjhjMTVlZDdjMyIsIm4iOiI2IiwiaWQiOjc4Mzk1MH0="
 
 # Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
@@ -37,3 +37,4 @@ scrape_configs:
   - job_name: 'node'
     static_configs:
       - targets: [ 'node-exporter:9100' ]
+
