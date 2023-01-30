@@ -1,2 +1,7 @@
 /global/secrets.py
 /global/prometheus.yml
+*/__pycache__/
+/discord/secrets.py
+/discord/db.py
+/picker/secrets.py
+/picker/db.py
