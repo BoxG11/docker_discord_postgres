@@ -1,2 +1,2 @@
-/discord/secrets.py
-./prometheus.yml
+/global/secrets.py
+/global/prometheus.yml

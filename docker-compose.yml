@@ -29,7 +29,7 @@ services:
     build: ./picker
     volumes:
       - "./picker/:/usr/src/app/"
-      - "./db.py:/usr/src/app/db.py"
+      - "./global/:/usr/src/app/global/"
     command: ["python", "/usr/src/app/picker.py"]
     networks:
       - postgres
@@ -41,7 +41,7 @@ services:
     build: ./discord
     volumes:
       - "./discord/:/usr/src/app/"
-      - "./db.py:/usr/src/app/db.py"
+      - "./global/:/usr/src/app/global/"
     command: ["python", "/usr/src/app/listener.py"]
     networks:
       - postgres
@@ -53,7 +53,8 @@ services:
     image: prom/prometheus
     container_name: prometheus_container
     volumes:
-      - "./prometheus.yml:/etc/prometheus/prometheus.yml"
+      - "./globals/prometheus.yml:/etc/prometheus/prometheus.yml"
+
 
     #command: [ "sed", "-i", "'s/$/replace_string/'", "filename" ]
 
