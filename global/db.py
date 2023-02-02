@@ -1,66 +1,38 @@
 import psycopg2
+import os
+import time
 
-"""CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
-    tokens INT DEFAULT NULL,
-    last_played TIMESTAMP DEFAULT NOW()
-);
 
-CREATE TABLE IF NOT EXISTS commands (
-    id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    text TEXT DEFAULT NULL,
-    time TIMESTAMP NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+import socket
 
-CREATE TABLE IF NOT EXISTS messages (
-    id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    text TEXT DEFAULT NULL,
-    time TIMESTAMP NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+def get_my_tasks():
+    sql_command = f"SELECT * FROM tasks WHERE worker = '{get_hostname()}' AND done = false;"
+    result = db_action(sql_command)
+    if result:
+        return result
+    else:
+        return []
 
-CREATE TABLE IF NOT EXISTS session (
-    user_id INT NOT NULL,
-    start TIMESTAMP NOT NULL DEFAULT NOW(),
-    stop TIMESTAMP,
-    session_id SERIAL PRIMARY KEY,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+def get_hostname():
 
-CREATE TABLE IF NOT EXISTS queue (
-    queue_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
-    task TEXT NOT NULL DEFAULT NULL,
-    taken_by TEXT NULL,
-    done BOOLEAN NOT NULL DEFAULT false,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
+    SERVER_NAME = socket.gethostname()
+    hostname = SERVER_NAME  
+    return hostname
 
-CREATE TABLE IF NOT EXISTS pickers (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL DEFAULT NULL,
-    working BOOLEAN,
-    time_started TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS responses (
-    user_id INT NOT NULL,
-    message_id SERIAL PRIMARY KEY,
-    answer TEXT,
-    sent BOOLEAN NOT NULL DEFAULT false,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-"""
+def get_blocked_users():
+    sql_command = "SELECT user_id FROM users WHERE blocked=true;"
+    result = db_action(sql_command)
+    if result:
+        return result
+    else:
+        return []
 
 def insert_user(user_id):
-    if not check_user(user_id):
+    if not check_user_exists(user_id):
         sql_command = f"INSERT INTO users (user_id) VALUES ('{user_id}');"
         db_action(sql_command)
 
-def check_user(user_id):
+def check_user_exists(user_id):
     sql_command = f"SELECT user_id FROM users WHERE user_id = '{user_id}';"
     result = db_action(sql_command)
     if result:
@@ -92,10 +64,6 @@ def decrease_tokens(user_id, tokens):
     sql_command = f"UPDATE users SET tokens = tokens - {tokens} WHERE user_id = '{user_id}';"
     db_action(sql_command)
 
-def get_tokens(user_id):
-    sql_command = f"SELECT tokens FROM users WHERE user_id = '{user_id}';"
-    result = db_action(sql_command, first=True)
-    return result
 
 def add_task(user_id, task):
     sql_command = f"INSERT INTO queue (user_id, task) VALUES ('{user_id}', '{task}');"
@@ -105,25 +73,83 @@ def claim_task(picker_id, task):
     sql_command = f"UPDATE queue SET taken_by = {picker_id} WHERE task = '{task}';"
     db_action(sql_command)
 
+def get_tokens(user_id):
+    sql_command = f"SELECT tokens FROM users WHERE user_id = '{user_id}';"
+    result = db_action(sql_command, first=True)[0][0]
+    return result
+    
 def check_my_task(picker_id):
-    sql_command = f"SELECT * FROM queue WHERE taken_by = {picker_id} AND done = 0;"
-    result = db_action(sql_command)
+    sql_command = f"SELECT * FROM queue WHERE taken_by = {picker_id} AND done = false;"
+    result = db_action(sql_command)[0]
     return result
 
 def get_tasks():
-    sql_command = "SELECT * FROM queue"
+    sql_command = "SELECT * FROM queue WHERE done = false;"
     result = db_action(sql_command)
     return result
 
 def finish_task(picker_id):
-    sql_command = f"UPDATE queue SET done = 1 WHERE taken_by = {picker_id} AND done = 0;"
+    sql_command = f"UPDATE queue SET done = true WHERE taken_by = {picker_id} AND done = false;"
     db_action(sql_command)
 
-def get_message():
-    sql_command = "SELECT user_id, text FROM messages WHERE sent = 0;"
+def get_messages_to_be_sent():
+    sql_command = "SELECT message_id, text FROM messages WHERE sent = false;"
     result = db_action(sql_command)
     if result:
         return result
+
+def message_claimed_yes(message_id):
+    sql_command = f"SELECT taken_by FROM messages WHERE message_id = '{message_id}';"
+    result = db_action(sql_command, first=True)
+    if result == hostname:
+        return True
+    return False
+
+def claim_message(message_id):
+    sql_command = f"UPDATE messages SET taken_by = '{get_hostname()}' WHERE message_id = '{message_id}';"
+    db_action(sql_command)
+
+
+def get_unfinished_tasks():
+    sql_command = "SELECT queue_id FROM queue WHERE done = false;"
+    result = db_action(sql_command)
+    if result:
+        return result
+    else:
+        return None
+
+def get_untaken_tasks():
+    sql_command = "SELECT queue_id FROM queue WHERE taken_by IS NULL;"
+    result = db_action(sql_command)
+    if result:
+        return result
+    else:
+        return None
+
+def get_unsent_messages():
+    sql_command = "SELECT message_id FROM messages WHERE sent = false;"
+    result = db_action(sql_command)
+    if result:
+        return result
+    else:
+        return None
+
+def get_my_tasks():
+    tasks = []
+    sql_command = f"SELECT task FROM queue WHERE taken_by = '{get_hostname()}' AND done = false;"
+    result = db_action(sql_command)
+    for task in result:
+        tasks.append(task[0])
+    if result:
+        return tasks
+    else:
+        return None
+
+def get_text_task(task_id):
+    sql_command = f"SELECT text FROM queue WHERE queue_id = {task_id};"
+    result = db_action(sql_command, first=True)[0]
+    return result
+
 
 
 # Connect to the database
@@ -138,17 +164,19 @@ def db_action(sql_command, first=False):
 
     cur.execute(sql_command)
 
+    results = []
+
     if first:
         try:
-            result = cur.fetchone()
+            results.append(cur.fetchone())
         except:
-            result = False
+            results = []
 
     else:
         try:
-            result = cur.fetchall()
+            results = cur.fetchall()
         except:
-            result = False
+            results = []
     
     # Commit the changes to the database
     conn.commit()
@@ -156,4 +184,4 @@ def db_action(sql_command, first=False):
     cur.close()
     conn.close()
 
-    return result
+    return results
